@@ -1,0 +1,15 @@
+<html>
+	<body>
+		<h1>Edit Item</h1>
+		<h1>{{item.name}}</h1>
+		<form action = "{{url_for('editItem',sport_id=sport_id, item_id = item.id)}}" method = 'post'>
+			<p>Edit Name:</p>
+			<input type="text" size='30' name="name" placeholder="{{item.name}}"></br>
+			<p>Edit Description:</p>
+			<input type="text" size='30' name="description" placeholder="{{item.description}}"></br></br>
+			<input type='submit' value='Edit'>
+			<a href = '{{url_for("showItem",sport_id=sport_id, item_id=item_id)}}'> Cancel </a>
+		</form>
+	</body>
+</html>
+
