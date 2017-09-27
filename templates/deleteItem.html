@@ -1,9 +1,22 @@
 <html>
-<body>
-<form action="{{url_for('deleteItem',sport_id=sport_id, item_id = item.id)}}" method = 'post'>
-	<h1>Are you sure you want to delete item: {{item.name}}?</h1>
-	<input type='submit' value='Delete'>
-	<a href = '{{url_for("showItem", sport_id=sport_id, item_id=item_id)}}'> Cancel </a>
-</form>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+	<title>McGill Outdoors Club</title>
+	<link rel="stylesheet" href="/static/bootstrap.min.css">
+  	<link rel="stylesheet" type="text/css" href="/static/styles.css">
+</head>
+<body class="sec-menu text-center">
+	<div class="container">
+		<div class="row">
+			<div class="col-md-12">	
+				<form action="{{url_for('deleteItem',sport_id=sport_id, item_id = item.id)}}" method = 'post' class="sec-title">
+					<h1>Are You Sure You Want to Delete Item: {{item.name}}?</h1>
+					<input type='submit' value='Delete' class="sec-title">
+					<a href = '{{url_for("showItem", sport_id=sport_id, item_id=item_id)}}' class="padding-left"> Cancel </a>	
+				</form>
+			</div>
+		</div>
+	</div>
 </body>
 </html>
