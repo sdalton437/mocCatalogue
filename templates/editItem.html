@@ -1,15 +1,61 @@
 <html>
-	<body>
-		<h1>Edit Item</h1>
-		<h1>{{item.name}}</h1>
-		<form action = "{{url_for('editItem',sport_id=sport_id, item_id = item.id)}}" method = 'post'>
-			<p>Edit Name:</p>
-			<input type="text" size='30' name="name" placeholder="{{item.name}}"></br>
-			<p>Edit Description:</p>
-			<input type="text" size='30' name="description" placeholder="{{item.description}}"></br></br>
-			<input type='submit' value='Edit'>
-			<a href = '{{url_for("showItem",sport_id=sport_id, item_id=item_id)}}'> Cancel </a>
-		</form>
-	</body>
+<head>
+	<meta charset="utf-8">
+  	<meta name="viewport" content="width=device-width,initial-scale=1">
+  	<title>McGill Outdoors Club</title>
+  	<link rel="stylesheet" href="/static/bootstrap.min.css">
+  	<link rel="stylesheet" type="text/css" href="/static/styles.css">
+</head>
+<nav>
+	<div class="row menu-bar">
+		<div class="col-md-4">
+		</div>
+
+		<div class="col-md-4">
+			<h1>McGill Outdoors Club</h1>
+		</div>
+
+		<div class="col-md-4">
+			<a class="btn button" href="{{url_for('menu')}}" role="button">Home</a>
+			<a class="btn button" href="{{url_for('gdisconnect')}}" role="button">Logout</a>
+		</div>
+	</div>
+</nav>
+
+<body class="menu sec-menu text-center container">
+	<div class="row">
+		<div class="col-md-4">
+		</div>
+
+		<div class="col-md-4">	
+			<h2>Edit Item</h2>
+			<h3>{{item.name}}</h3>
+			<img src="{{item.picture}}" width='304px' class="center-block img1">
+			<form action = "{{url_for('editItem',sport_id=sport_id, item_id = item.id)}}" method = 'post'>
+				<div>
+					<label class="label1">Name</label>
+					<input type="text" size='30' name="name" placeholder="{{item.name}}" class="input-box2"></br></br>
+				</div>
+			
+				<div>
+					<label class="label1">Description</label>
+					<input type="text" size='30' name="description" placeholder="{{item.description}}" class="input-box2"></br></br>
+				</div>
+
+				<div>
+					<label class="label1">Picture</label>
+					<input type="url" name="picture" size="40" placeholder = "Paste url for new picture here" class="input-box2">
+				</div>
+				</br>
+
+				<input type='submit' value='Edit' class="text-center">
+				<a href = '{{url_for("showItem",sport_id=sport_id, item_id=item_id)}}'> Cancel </a>
+			</form>
+		</div>
+		
+		<div class="col-md-4">
+		</div>
+	</div>
+</body>
 </html>
 
