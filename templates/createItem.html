@@ -1,11 +1,35 @@
 <html>
-<body>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+	<title>McGill Outdoors Club</title>
+	<link rel="stylesheet" href="/static/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="/static/styles.css">
+</head>
+<nav class="container">
+	<div class="row menu-bar">
+		<div class="col-md-4">
+		</div>
+
+		<div class="col-md-4">
+			<h1>McGill Outdoors Club</h1>
+		</div>
+
+		<div class="col-md-4">
+			<a class="btn button" href="{{url_for('menu')}}" role="button">Home</a>
+			<a class="btn button" href="{{url_for('gdisconnect')}}" role="button">Logout</a>
+		</div>
+	</div>
+</nav>
+<body class="menu sec-menu text-center">
+	<h1 class="sec-title">Create New Item:</h1>
 	<form action = "{{url_for('createItem',sport_id=sport_id)}}" method = 'post'>
-		<h1>Create New Item:</h1>
-		<p>Name:</p>
-		<input type="text" size='30' name="name"></br>
-		<p>Description:</p>
-		<input type="text" size='30' name="description"></br></br>
+		<label class="label1">Name: </label>
+		<input type="text" size='30' name="name" class="input-box"></br></br>
+		
+		<label class="label1">Description: </label>
+		<input type="text" size='30' name="description" class="input-box"></br></br>
+	
 		<input type='submit' value='Create'>
 		<a href = '{{url_for("showSport",sport_id=sport_id)}}'> Cancel </a>
 	</form>
