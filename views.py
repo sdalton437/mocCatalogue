@@ -238,8 +238,8 @@ def deleteItem(sport_id, item_id):
 @app.route('/catalog/<int:sport_id>/create', methods=['GET', 'POST'])
 def createItem(sport_id):
     if request.method == 'POST':
-        newItem = Item(name=request.form['name'], description=request.form[
-                       'description'], sport_id=sport_id)
+         newItem = Item(name=request.form['name'], description=request.form[
+                       'description'], picture=request.form['picture'],sport_id=sport_id)
         session.add(newItem)
         session.commit()
         flash('Item Created!')
