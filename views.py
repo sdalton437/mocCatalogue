@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from database_setup import Base, Sport, Item, User
@@ -15,16 +16,29 @@ import json
 from flask import make_response
 import requests
 
+from functools import wraps
+
 app = Flask(__name__)
 
 # Declare the client_id
 CLIENT_ID = json.loads(open('client_secrets.json', 'r').read())[
     'web']['client_id']
+APPLICATION_NAME = "MOC Catalogue"
 engine = create_engine('sqlite:///catalogitems.db')
 Base.metadata.create_all(engine)
 
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
+
+
+# Create login decorator
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'username' not in login_session:
+            return redirect('/login')
+        return f(*args, **kwargs)
+    return decorated_function
 
 
 # Login page
@@ -36,6 +50,8 @@ def showLogin():
     return render_template("login.html", STATE=state)
 
 # login function
+
+
 @app.route('/gconnect', methods=['POST'])
 def gconnect():
     # Validate state token
@@ -88,7 +104,8 @@ def gconnect():
     stored_access_token = login_session.get('access_token')
     stored_gplus_id = login_session.get('gplus_id')
     if stored_access_token is not None and gplus_id == stored_gplus_id:
-        response = make_response(json.dumps('Current user is already connected.'),
+        response = make_response(json.dumps('Current user is already'
+                                            'connected.'),
                                  200)
         response.headers['Content-Type'] = 'application/json'
         return response
@@ -119,12 +136,16 @@ def gconnect():
     output += '!</h1>'
     output += '<img src="'
     output += login_session['picture']
-    output += ' " style = "width: 300px; height: 300px;border-radius: 150px;-webkit-border-radius: 150px;-moz-border-radius: 150px;"> '
+    output += ' " style = "width: 300px; height: 300px;'
+    'border-radius: 150px;-webkit-border-radius:'
+    '150px;-moz-border-radius: 150px;"> '
     flash("you are now logged in as %s" % login_session['username'])
     print "done!"
     return output
 
 # logout function
+
+
 @app.route('/gdisconnect')
 def gdisconnect():
     access_token = login_session.get('access_token')
@@ -137,8 +158,7 @@ def gdisconnect():
     print 'In gdisconnect access token is %s', access_token
     print 'User name is: '
     print login_session['username']
-    url = 'https://accounts.google.com/o/oauth2/revoke?token=%s' % login_session[
-        'access_token']
+    url = 'https://accounts.google.com/o/oauth2/revoke?token=%s' % login_session['access_token']
     h = httplib2.Http()
     result = h.request(url, 'GET')[0]
     print 'result is '
@@ -159,33 +179,44 @@ def gdisconnect():
         return response
 
 # Return all sport in JSON format
+
+
 @app.route('/JSON')
 def menuJSON():
     categories = session.query(Sport).all()
     return jsonify(Categories=[i.serialize for i in categories])
 
 # Return all items in specific sport in JSON format
-@app.route('/catalog/<sport_id>/items/JSON')
+
+
+@app.route('/catalog/<int:sport_id>/items/JSON')
 def showSportJSON(sport_id):
     sport = session.query(Sport).filter_by(id=sport_id).one()
     items = session.query(Item).filter_by(sport_id=sport.id).all()
     return jsonify(SportItems=[i.serialize for i in items])
 
 # Return specific sport in JSON format
-@app.route('/catalog/<sport_id>/<item_id>/JSON')
+
+
+@app.route('/catalog/int:sport_id>/<int:item_id>/JSON')
 def showItemJSON(sport_id, item_id):
     showItem = session.query(Item).filter_by(id=item_id).one()
     return jsonify(Item=showItem.serialize)
 
 # Main Menu
+
+
 @app.route('/')
 def menu():
     categories = session.query(Sport).all()
     Login_session = login_session
-    return render_template("mainMenu.html", categories=categories, login_session=Login_session)
+    return render_template("mainMenu.html",
+                           categories=categories, login_session=Login_session)
 
 # Sport Main Menu
-@app.route('/catalog/<sport_id>/items/')
+
+
+@app.route('/catalog/<int:sport_id>/items/')
 def showSport(sport_id):
     sport = session.query(Sport).filter_by(id=sport_id).one()
     items = session.query(Item).filter_by(sport_id=sport.id).all()
@@ -195,18 +226,25 @@ def showSport(sport_id):
         return render_template('showSport.html', item=sport, items=items)
 
 # Item Main Menu
-@app.route('/catalog/<sport_id>/<item_id>/')
+
+
+@app.route('/catalog/<int:sport_id>/<int:item_id>/')
 def showItem(sport_id, item_id):
     showItem = session.query(Item).filter_by(id=item_id).one()
-    if 'username' not in login_session:
+    if 'username' not in login_session or showItem.user_id != login_session['user_id']:
         return render_template('publicshowItem.html', item=showItem)
     else:
         return render_template('showItem.html', item=showItem)
 
 # Edit Item
+
+
 @app.route('/catalog/<int:sport_id>/<int:item_id>/edit', methods=['GET', 'POST'])
+@login_required
 def editItem(sport_id, item_id):
     editedItem = session.query(Item).filter_by(id=item_id).one()
+    creator = getUserID(editedItem.user_id)
+
     if request.method == 'POST':
         if request.form['name']:
             editedItem.name = request.form['name']
@@ -217,12 +255,21 @@ def editItem(sport_id, item_id):
         session.add(editedItem)
         session.commit()
         flash("Item Edited!")
-        return redirect(url_for('showItem', item_id=item_id, sport_id=sport_id, item=editedItem))
+        return redirect(url_for('showItem', item_id=item_id,
+                                sport_id=sport_id, item=editedItem))
+    if 'username' not in login_session or editedItem.user_id != login_session['user_id']:
+        return ("<script>function myFunction(){alert"
+        "('You are not authorized to edit this item. Please login as owner to edit item.');}"
+        "</script><body onload='myFunction()''>")
     else:
-        return render_template('editItem.html', sport_id=sport_id, item_id=item_id, item=editedItem)
+        return render_template('editItem.html', sport_id=sport_id,
+                               item_id=item_id, item=editedItem)
 
 # Delete Item
-@app.route('/catalog/<sport_id>/<item_id>/delete', methods=['GET', 'POST'])
+
+
+@app.route('/catalog/<int:sport_id>/<int:item_id>/delete', methods=['GET', 'POST'])
+@login_required
 def deleteItem(sport_id, item_id):
     deletedItem = session.query(Item).filter_by(id=item_id).one()
 
@@ -231,15 +278,27 @@ def deleteItem(sport_id, item_id):
         session.commit()
         flash("Item Deleted!")
         return redirect(url_for('showSport', sport_id=sport_id))
+    if 'username' not in login_session or deletedItem.user_id != login_session['user_id']:
+        return ("<script>function myFunction() "
+        "{alert('You are not authorized to delete this item. "
+        "Please login as owner to edit item.');}</script><body "
+        "onload='myFunction()''>")
     else:
-        return render_template('deleteItem.html', sport_id=sport_id, item_id=item_id, item=deletedItem)
+        return render_template('deleteItem.html', sport_id=sport_id,
+                               item_id=item_id, item=deletedItem)
 
 # Create Item
+
+
 @app.route('/catalog/<int:sport_id>/create', methods=['GET', 'POST'])
+@login_required
 def createItem(sport_id):
+
     if request.method == 'POST':
-         newItem = Item(name=request.form['name'], description=request.form[
-                       'description'], picture=request.form['picture'],sport_id=sport_id)
+        newItem = Item(name=request.form['name'],
+                       description=request.form['description'],
+                       picture=request.form['picture'],
+                       sport_id=sport_id, user_id=login_session['user_id'])
         session.add(newItem)
         session.commit()
         flash('Item Created!')
@@ -248,15 +307,19 @@ def createItem(sport_id):
         return render_template('createItem.html', sport_id=sport_id)
 
 # Create User
+
+
 def createUser(login_session):
     newUser = User(name=login_session['username'], email=login_session[
                    'email'], picture=login_session['picture'])
     session.add(newUser)
-    session.commit
+    session.commit()
     user = session.query(User).filter_by(email=login_session['email']).one()
     return user.id
 
 # Get User ID
+
+
 def getUserID(email):
     try:
         user = session.query(User).filter_by(email=email).one()
