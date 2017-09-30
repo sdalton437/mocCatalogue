@@ -20,7 +20,12 @@
 
 		<div class="col-md-4">
 			<a class="btn button" href="{{url_for('menu')}}" role="button">Home</a>
-			<a class="btn button" href="{{url_for('showLogin')}}" role="button">Login</a>	
+			{% if (login_session.username) %}
+        		<a class="btn button" href="{{url_for('gdisconnect')}}" role="button">Logout</a>
+      		{% else %}
+        		<a class="btn button" href="{{url_for('showLogin')}}" role="button">Login</a>
+      		{% endif%}
+  
 		</div>
 
 	</div>
