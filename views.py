@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from flask import Flask, render_template, request
+from flask import redirect, url_for, flash, jsonify
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -158,7 +159,8 @@ def gdisconnect():
     print 'In gdisconnect access token is %s', access_token
     print 'User name is: '
     print login_session['username']
-    url = 'https://accounts.google.com/o/oauth2/revoke?token=%s' % login_session['access_token']
+    url = ('https://accounts.google.com/o/oauth2/'
+           'revoke?token=%s') % login_session['access_token']
     h = httplib2.Http()
     result = h.request(url, 'GET')[0]
     print 'result is '
@@ -198,7 +200,7 @@ def showSportJSON(sport_id):
 # Return specific sport in JSON format
 
 
-@app.route('/catalog/int:sport_id>/<int:item_id>/JSON')
+@app.route('/catalog/<int:sport_id>/<int:item_id>/JSON')
 def showItemJSON(sport_id, item_id):
     showItem = session.query(Item).filter_by(id=item_id).one()
     return jsonify(Item=showItem.serialize)
@@ -220,8 +222,10 @@ def menu():
 def showSport(sport_id):
     sport = session.query(Sport).filter_by(id=sport_id).one()
     items = session.query(Item).filter_by(sport_id=sport.id).all()
+    Login_session = login_session
     if 'username' not in login_session:
-        return render_template('publicshowSport.html', item=sport, items=items)
+        return render_template('publicshowSport.html', item=sport, items=items,
+                               login_session=Login_session)
     else:
         return render_template('showSport.html', item=sport, items=items)
 
@@ -231,19 +235,29 @@ def showSport(sport_id):
 @app.route('/catalog/<int:sport_id>/<int:item_id>/')
 def showItem(sport_id, item_id):
     showItem = session.query(Item).filter_by(id=item_id).one()
-    if 'username' not in login_session or showItem.user_id != login_session['user_id']:
-        return render_template('publicshowItem.html', item=showItem)
+    Login_session = login_session
+    if ('username' not in login_session or
+            showItem.user_id != login_session['user_id']):
+        return render_template('publicshowItem.html', item=showItem,
+                               login_session=Login_session)
     else:
         return render_template('showItem.html', item=showItem)
 
 # Edit Item
 
 
-@app.route('/catalog/<int:sport_id>/<int:item_id>/edit', methods=['GET', 'POST'])
+@app.route('/catalog/<int:sport_id>/<int:item_id>/edit',
+           methods=['GET', 'POST'])
 @login_required
 def editItem(sport_id, item_id):
     editedItem = session.query(Item).filter_by(id=item_id).one()
     creator = getUserID(editedItem.user_id)
+    if ('username' not in login_session or
+            editedItem.user_id != login_session['user_id']):
+        return ("<script>function myFunction(){alert"
+                "('You are not authorized to edit this item."
+                " Please login as owner to edit item.');}"
+                "</script><body onload='myFunction()''>")
 
     if request.method == 'POST':
         if request.form['name']:
@@ -257,10 +271,6 @@ def editItem(sport_id, item_id):
         flash("Item Edited!")
         return redirect(url_for('showItem', item_id=item_id,
                                 sport_id=sport_id, item=editedItem))
-    if 'username' not in login_session or editedItem.user_id != login_session['user_id']:
-        return ("<script>function myFunction(){alert"
-        "('You are not authorized to edit this item. Please login as owner to edit item.');}"
-        "</script><body onload='myFunction()''>")
     else:
         return render_template('editItem.html', sport_id=sport_id,
                                item_id=item_id, item=editedItem)
@@ -268,21 +278,22 @@ def editItem(sport_id, item_id):
 # Delete Item
 
 
-@app.route('/catalog/<int:sport_id>/<int:item_id>/delete', methods=['GET', 'POST'])
+@app.route('/catalog/<int:sport_id>/<int:item_id>/delete',
+           methods=['GET', 'POST'])
 @login_required
 def deleteItem(sport_id, item_id):
     deletedItem = session.query(Item).filter_by(id=item_id).one()
-
+    if ('username' not in login_session or
+            deletedItem.user_id != login_session['user_id']):
+        return ("<script>function myFunction() "
+                "{alert('You are not authorized to delete this item. "
+                "Please login as owner to edit item.');}</script><body "
+                "onload='myFunction()''>")
     if request.method == 'POST':
         session.delete(deletedItem)
         session.commit()
         flash("Item Deleted!")
         return redirect(url_for('showSport', sport_id=sport_id))
-    if 'username' not in login_session or deletedItem.user_id != login_session['user_id']:
-        return ("<script>function myFunction() "
-        "{alert('You are not authorized to delete this item. "
-        "Please login as owner to edit item.');}</script><body "
-        "onload='myFunction()''>")
     else:
         return render_template('deleteItem.html', sport_id=sport_id,
                                item_id=item_id, item=deletedItem)
